@@ -1,383 +1,1148 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>CampusCore | Student Management System</title>
+
     <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
 </head>
+
 <body>
 
     <!-- LOGIN PAGE -->
     <section id="loginPage" class="login-page">
+
         <div class="login-card">
-            <div class="brand-icon">C</div>
+
+            <div class="brand-logo">CC</div>
+
             <h1>CampusCore</h1>
-            <p class="subtitle">Student Management System</p>
+
+            <p class="login-subtitle">
+                Student Management System
+            </p>
 
             <form id="loginForm">
+
                 <label for="loginId">User ID</label>
+
                 <input
                     type="text"
                     id="loginId"
                     placeholder="Enter your user ID"
-                    autocomplete="username"
                     required
                 >
 
                 <label for="loginPassword">Password</label>
+
                 <input
                     type="password"
                     id="loginPassword"
                     placeholder="Enter your password"
-                    autocomplete="current-password"
                     required
                 >
 
-                <p id="loginError" class="error-message" role="alert"></p>
-
-                <button type="submit" class="primary-button login-button">
-                    Sign In
+                <button type="submit" class="primary-btn login-btn">
+                    Login
                 </button>
+
+                <p id="loginError" class="error-message"></p>
+
             </form>
 
             <div class="demo-credentials">
-                <h3>Demo Login Credentials</h3>
-                <p><strong>Student:</strong> STU1001 / student123</p>
-                <p><strong>Teacher:</strong> TCH1001 / teacher123</p>
+
+                <h3>Demo Credentials</h3>
+
                 <p><strong>Admin:</strong> ADMIN / admin123</p>
+
+                <p><strong>Teacher:</strong> TCH1001 / teacher123</p>
+
+                <p><strong>Student:</strong> STU1001 / student123</p>
+
             </div>
+
         </div>
+
     </section>
 
 
     <!-- MAIN APPLICATION -->
     <div id="app" class="app hidden">
 
+        <!-- SIDEBAR -->
         <aside id="sidebar" class="sidebar">
+
             <div class="sidebar-brand">
-                <div class="brand-icon small">C</div>
+
+                <div class="brand-logo small-logo">CC</div>
+
                 <div>
                     <h2>CampusCore</h2>
-                    <span>Management Portal</span>
+                    <p>Management Portal</p>
                 </div>
+
             </div>
 
             <div class="sidebar-user">
-                <div id="userAvatar" class="avatar">U</div>
-                <div>
-                    <strong id="userName">User</strong>
-                    <span id="userRole">Role</span>
+
+                <div class="user-avatar" id="sidebarAvatar">
+                    U
                 </div>
+
+                <div>
+                    <h3 id="sidebarUserName">User</h3>
+                    <p id="sidebarUserRole">Role</p>
+                </div>
+
             </div>
 
             <nav class="navigation">
-                <a href="#" class="nav-item active" data-view="dashboard">Dashboard</a>
-                <a href="#" class="nav-item" data-view="students">Students</a>
-                <a href="#" class="nav-item" data-view="reports">Reports & Grades</a>
-                <a href="#" class="nav-item" data-view="attendance">Attendance</a>
-                <a href="#" class="nav-item" data-view="myAcademics">My Academics</a>
-                <a href="#" class="nav-item" data-view="admin">Administration</a>
-                <a href="#" class="nav-item" data-view="profile">My Profile</a>
+
+                <button class="nav-link active" data-view="dashboard">
+                    <span>▦</span>
+                    Dashboard
+                </button>
+
+                <button class="nav-link" data-view="students">
+                    <span>♙</span>
+                    Students
+                </button>
+
+                <button class="nav-link" data-view="teachers">
+                    <span>♧</span>
+                    Teachers
+                </button>
+
+                <button class="nav-link" data-view="reports">
+                    <span>▤</span>
+                    Reports & Grades
+                </button>
+
+                <button class="nav-link" data-view="attendance">
+                    <span>✓</span>
+                    Attendance
+                </button>
+
+                <button class="nav-link" data-view="myAcademics">
+                    <span>🎓</span>
+                    My Academics
+                </button>
+
+                <button class="nav-link" data-view="admin">
+                    <span>⚙</span>
+                    Administration
+                </button>
+
+                <button class="nav-link" data-view="profile">
+                    <span>♙</span>
+                    My Profile
+                </button>
+
             </nav>
 
-            <button id="logoutButton" class="logout-button">Log Out</button>
+            <div class="sidebar-bottom">
+
+                <button id="themeToggle" class="sidebar-action">
+                    <span id="themeIcon">☾</span>
+                    <span id="themeText">Dark Mode</span>
+                </button>
+
+                <button id="logoutBtn" class="sidebar-action logout-btn">
+                    <span>⇥</span>
+                    Logout
+                </button>
+
+            </div>
+
         </aside>
 
 
+        <!-- MAIN CONTENT -->
         <main class="main-content">
+
+            <!-- TOPBAR -->
             <header class="topbar">
-                <button id="sidebarToggle" class="menu-button" type="button">☰</button>
-                <div>
-                    <h1 id="pageTitle">Dashboard</h1>
-                    <p>Welcome to your campus portal</p>
+
+                <div class="topbar-left">
+
+                    <button id="sidebarToggle" class="icon-btn">
+                        ☰
+                    </button>
+
+                    <div>
+                        <h1 id="pageTitle">Dashboard</h1>
+                        <p>Welcome to your CampusCore portal</p>
+                    </div>
+
                 </div>
-                <span class="portal-label">Campus Portal</span>
+
+                <div class="topbar-right">
+
+                    <span id="currentDate" class="date-label"></span>
+
+                    <div class="topbar-avatar" id="topbarAvatar">
+                        U
+                    </div>
+
+                </div>
+
             </header>
 
 
-            <!-- DASHBOARD -->
-            <section id="dashboardView" class="view">
-                <div class="welcome-card">
-                    <div>
-                        <span class="eyebrow">YOUR CAMPUS OVERVIEW</span>
-                        <h2>Welcome, <span id="welcomeName">User</span>!</h2>
-                        <p>Manage your academic information in one place.</p>
+            <!-- VIEW CONTAINER -->
+            <div class="content-area">
+
+
+                <!-- DASHBOARD -->
+                <section id="dashboardView" class="view-section">
+
+                    <div class="welcome-banner">
+
+                        <div>
+                            <p class="banner-label">CAMPUSCORE PORTAL</p>
+
+                            <h2 id="welcomeMessage">
+                                Welcome back!
+                            </h2>
+
+                            <p>
+                                Manage your academic activities from one place.
+                            </p>
+                        </div>
+
+                        <div class="banner-icon">🎓</div>
+
                     </div>
-                    <div class="welcome-symbol">✦</div>
-                </div>
-
-                <div id="statsGrid" class="stats-grid"></div>
-
-                <div class="content-card">
-                    <h2>Quick Information</h2>
-                    <p>Use the navigation menu to access the sections available to your account.</p>
-                </div>
-            </section>
 
 
-            <!-- STUDENTS -->
-            <section id="studentsView" class="view hidden">
-                <div class="section-heading">
-                    <div>
-                        <h2>Student Directory</h2>
-                        <p>View registered students.</p>
+                    <div class="stats-grid">
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon purple">♙</div>
+
+                            <div>
+                                <p>Total Students</p>
+                                <h2 id="totalStudents">0</h2>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon blue">♧</div>
+
+                            <div>
+                                <p>Total Teachers</p>
+                                <h2 id="totalTeachers">0</h2>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon green">✓</div>
+
+                            <div>
+                                <p>Attendance Records</p>
+                                <h2 id="totalAttendance">0</h2>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon orange">▤</div>
+
+                            <div>
+                                <p>Grade Records</p>
+                                <h2 id="totalReports">0</h2>
+                            </div>
+
+                        </div>
+
                     </div>
-                </div>
 
-                <div class="content-card">
-                    <div class="table-wrapper">
+
+                    <div class="section-heading">
+
+                        <div>
+                            <h2>Recent Students</h2>
+                            <p>Recently added students</p>
+                        </div>
+
+                        <button class="secondary-btn" data-goto="students">
+                            View Students
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-container">
+
                         <table>
+
                             <thead>
                                 <tr>
                                     <th>Student ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Department</th>
-                                    <th>Semester</th>
+                                    <th>Year</th>
                                 </tr>
                             </thead>
-                            <tbody id="studentsTable"></tbody>
+
+                            <tbody id="recentStudentsTable"></tbody>
+
                         </table>
+
                     </div>
-                </div>
 
-                <div id="addStudentSection" class="content-card">
-                    <h2>Add Student</h2>
-                    <form id="studentForm" class="form-grid">
-                        <div>
-                            <label for="studentId">Student ID</label>
-                            <input id="studentId" required>
-                        </div>
-                        <div>
-                            <label for="studentName">Full Name</label>
-                            <input id="studentName" required>
-                        </div>
-                        <div>
-                            <label for="studentEmail">Email</label>
-                            <input id="studentEmail" type="email" required>
-                        </div>
-                        <div>
-                            <label for="studentDepartment">Department</label>
-                            <input id="studentDepartment" required>
-                        </div>
-                        <div>
-                            <label for="studentSemester">Semester</label>
-                            <input id="studentSemester" required>
-                        </div>
-                        <div class="form-action">
-                            <button type="submit" class="primary-button">Add Student</button>
-                        </div>
-                    </form>
-                </div>
-            </section>
+                </section>
 
 
-            <!-- REPORTS -->
-            <section id="reportsView" class="view hidden">
-                <div class="section-heading">
-                    <div>
-                        <h2>Reports & Grades</h2>
-                        <p>View academic marks and calculated grades.</p>
+
+                <!-- STUDENTS -->
+                <section id="studentsView" class="view-section hidden">
+
+                    <div class="section-heading">
+
+                        <div>
+                            <h2>Student Management</h2>
+
+                            <p>
+                                Add, search, and manage student information.
+                            </p>
+                        </div>
+
                     </div>
-                </div>
 
-                <div class="content-card">
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Student ID</th>
-                                    <th>Student Name</th>
-                                    <th>Subject</th>
-                                    <th>Marks</th>
-                                    <th>Total</th>
-                                    <th>Grade</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reportsTable"></tbody>
-                        </table>
+
+                    <div id="addStudentSection" class="panel">
+
+                        <h3>Add New Student</h3>
+
+                        <form id="studentForm" class="form-grid">
+
+                            <div class="form-group">
+                                <label for="studentId">Student ID</label>
+
+                                <input
+                                    id="studentId"
+                                    type="text"
+                                    placeholder="STU1004"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="studentName">Full Name</label>
+
+                                <input
+                                    id="studentName"
+                                    type="text"
+                                    placeholder="Enter full name"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="studentEmail">Email</label>
+
+                                <input
+                                    id="studentEmail"
+                                    type="email"
+                                    placeholder="student@example.com"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="studentDepartment">Department</label>
+
+                                <input
+                                    id="studentDepartment"
+                                    type="text"
+                                    placeholder="Computer Science"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="studentYear">Year</label>
+
+                                <select id="studentYear" required>
+                                    <option value="">Select year</option>
+                                    <option value="1st Year">1st Year</option>
+                                    <option value="2nd Year">2nd Year</option>
+                                    <option value="3rd Year">3rd Year</option>
+                                    <option value="4th Year">4th Year</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="studentPassword">Login Password</label>
+
+                                <input
+                                    id="studentPassword"
+                                    type="password"
+                                    placeholder="Set student password"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-submit">
+                                <button class="primary-btn" type="submit">
+                                    Add Student
+                                </button>
+                            </div>
+
+                        </form>
+
                     </div>
-                </div>
 
-                <div id="addReportSection" class="content-card">
-                    <h2>Add Academic Report</h2>
-                    <form id="reportForm" class="form-grid">
+
+                    <div class="panel">
+
+                        <div class="table-toolbar">
+
+                            <div>
+                                <h3>All Students</h3>
+                                <p id="studentCount">0 students</p>
+                            </div>
+
+                            <input
+                                type="search"
+                                id="studentSearch"
+                                class="search-box"
+                                placeholder="Search by name, ID, email..."
+                            >
+
+                        </div>
+
+
+                        <div class="table-container">
+
+                            <table>
+
+                                <thead>
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Year</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="studentsTable"></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- TEACHERS -->
+                <section id="teachersView" class="view-section hidden">
+
+                    <div class="section-heading">
+
                         <div>
-                            <label for="reportStudentId">Student ID</label>
-                            <select id="reportStudentId" required></select>
+                            <h2>Teacher Management</h2>
+
+                            <p>
+                                Manage teacher profiles and department details.
+                            </p>
                         </div>
+
+                    </div>
+
+
+                    <div class="stats-grid teacher-stats">
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon purple">♧</div>
+
+                            <div>
+                                <p>Total Teachers</p>
+                                <h2 id="teacherCount">0</h2>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon blue">▤</div>
+
+                            <div>
+                                <p>Departments</p>
+                                <h2 id="teacherDepartments">0</h2>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="addTeacherSection" class="panel">
+
+                        <h3>Add New Teacher</h3>
+
+                        <form id="teacherForm" class="form-grid">
+
+                            <div class="form-group">
+                                <label for="teacherId">Teacher ID</label>
+
+                                <input
+                                    id="teacherId"
+                                    type="text"
+                                    placeholder="TCH1002"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teacherName">Full Name</label>
+
+                                <input
+                                    id="teacherName"
+                                    type="text"
+                                    placeholder="Enter teacher name"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teacherEmail">Email</label>
+
+                                <input
+                                    id="teacherEmail"
+                                    type="email"
+                                    placeholder="teacher@example.com"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teacherDepartment">Department</label>
+
+                                <input
+                                    id="teacherDepartment"
+                                    type="text"
+                                    placeholder="Computer Science"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teacherDesignation">Designation</label>
+
+                                <input
+                                    id="teacherDesignation"
+                                    type="text"
+                                    placeholder="Assistant Professor"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teacherPhone">Phone</label>
+
+                                <input
+                                    id="teacherPhone"
+                                    type="tel"
+                                    placeholder="Enter phone number"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teacherPassword">Login Password</label>
+
+                                <input
+                                    id="teacherPassword"
+                                    type="password"
+                                    placeholder="Set teacher password"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-submit">
+
+                                <button class="primary-btn" type="submit">
+                                    Add Teacher
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+
+                    <div class="panel">
+
+                        <div class="table-toolbar">
+
+                            <div>
+                                <h3>All Teachers</h3>
+                                <p>Teacher directory</p>
+                            </div>
+
+                            <input
+                                type="search"
+                                id="teacherSearch"
+                                class="search-box"
+                                placeholder="Search teachers..."
+                            >
+
+                        </div>
+
+
+                        <div class="table-container">
+
+                            <table>
+
+                                <thead>
+                                    <tr>
+                                        <th>Teacher ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Designation</th>
+                                        <th>Phone</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="teachersTable"></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- REPORTS AND GRADES -->
+                <section id="reportsView" class="view-section hidden">
+
+                    <div class="section-heading">
+
                         <div>
-                            <label for="reportSubject">Subject</label>
-                            <input id="reportSubject" required>
+                            <h2>Reports & Grades</h2>
+
+                            <p>
+                                Record and review student academic performance.
+                            </p>
                         </div>
+
+                    </div>
+
+
+                    <div id="addReportSection" class="panel">
+
+                        <h3>Add Grade Record</h3>
+
+                        <form id="reportForm" class="form-grid">
+
+                            <div class="form-group">
+
+                                <label for="reportStudent">Student</label>
+
+                                <select id="reportStudent" required></select>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="reportSubject">Subject</label>
+
+                                <input
+                                    id="reportSubject"
+                                    type="text"
+                                    placeholder="Data Structures"
+                                    required
+                                >
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="reportMarks">Marks Obtained</label>
+
+                                <input
+                                    id="reportMarks"
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    placeholder="85"
+                                    required
+                                >
+
+                            </div>
+
+                            <div class="form-submit">
+
+                                <button class="primary-btn" type="submit">
+                                    Add Grade
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+
+                    <div class="panel">
+
+                        <div class="table-toolbar">
+
+                            <div>
+                                <h3>Academic Records</h3>
+                                <p>Student grades and marks</p>
+                            </div>
+
+                            <input
+                                type="search"
+                                id="reportSearch"
+                                class="search-box"
+                                placeholder="Search student or subject..."
+                            >
+
+                        </div>
+
+
+                        <div class="table-container">
+
+                            <table>
+
+                                <thead>
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Student Name</th>
+                                        <th>Subject</th>
+                                        <th>Marks</th>
+                                        <th>Grade</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="reportsTable"></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- ATTENDANCE -->
+                <section id="attendanceView" class="view-section hidden">
+
+                    <div class="section-heading">
+
                         <div>
-                            <label for="reportMarks">Marks Obtained</label>
-                            <input id="reportMarks" type="number" min="0" required>
+                            <h2>Attendance Management</h2>
+
+                            <p>
+                                Record and review student attendance.
+                            </p>
                         </div>
+
+                    </div>
+
+
+                    <div id="addAttendanceSection" class="panel">
+
+                        <h3>Mark Attendance</h3>
+
+                        <form id="attendanceForm" class="form-grid">
+
+                            <div class="form-group">
+
+                                <label for="attendanceStudent">Student</label>
+
+                                <select id="attendanceStudent" required></select>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="attendanceDate">Date</label>
+
+                                <input
+                                    id="attendanceDate"
+                                    type="date"
+                                    required
+                                >
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="attendanceStatus">Status</label>
+
+                                <select id="attendanceStatus" required>
+                                    <option value="Present">Present</option>
+                                    <option value="Absent">Absent</option>
+                                </select>
+
+                            </div>
+
+                            <div class="form-submit">
+
+                                <button class="primary-btn" type="submit">
+                                    Save Attendance
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+
+                    <div class="panel">
+
+                        <div class="table-toolbar">
+
+                            <div>
+                                <h3>Attendance Records</h3>
+                                <p>Daily attendance details</p>
+                            </div>
+
+                            <input
+                                type="search"
+                                id="attendanceSearch"
+                                class="search-box"
+                                placeholder="Search student or date..."
+                            >
+
+                        </div>
+
+
+                        <div class="table-container">
+
+                            <table>
+
+                                <thead>
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Student Name</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="attendanceTable"></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- MY ACADEMICS -->
+                <section id="myAcademicsView" class="view-section hidden">
+
+                    <div class="section-heading">
+
                         <div>
-                            <label for="reportTotal">Total Marks</label>
-                            <input id="reportTotal" type="number" min="1" value="100" required>
+                            <h2>My Academics</h2>
+
+                            <p>
+                                View your grades and attendance.
+                            </p>
                         </div>
+
+                    </div>
+
+
+                    <div class="stats-grid">
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon purple">▤</div>
+
+                            <div>
+                                <p>Subjects</p>
+                                <h2 id="mySubjectCount">0</h2>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon green">✓</div>
+
+                            <div>
+                                <p>Average Marks</p>
+                                <h2 id="myAverageMarks">0%</h2>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon blue">▦</div>
+
+                            <div>
+                                <p>Attendance</p>
+                                <h2 id="myAttendancePercent">0%</h2>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="panel">
+
+                        <h3>My Grades</h3>
+
+                        <div class="table-container">
+
+                            <table>
+
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Marks</th>
+                                        <th>Grade</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="myGradesTable"></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="panel">
+
+                        <h3>My Attendance Records</h3>
+
+                        <div class="table-container">
+
+                            <table>
+
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="myAttendanceTable"></tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- ADMINISTRATION -->
+                <section id="adminView" class="view-section hidden">
+
+                    <div class="section-heading">
+
                         <div>
-                            <label for="reportDate">Date</label>
-                            <input id="reportDate" type="date" required>
+                            <h2>Administration</h2>
+
+                            <p>
+                                Overview of CampusCore data.
+                            </p>
                         </div>
-                        <div class="form-action">
-                            <button type="submit" class="primary-button">Save Marks</button>
+
+                    </div>
+
+
+                    <div class="stats-grid">
+
+                        <div class="stat-card">
+                            <div class="stat-icon purple">♙</div>
+
+                            <div>
+                                <p>Students</p>
+                                <h2 id="adminStudentCount">0</h2>
+                            </div>
                         </div>
-                    </form>
-                </div>
-            </section>
 
+                        <div class="stat-card">
+                            <div class="stat-icon blue">♧</div>
 
-            <!-- ATTENDANCE -->
-            <section id="attendanceView" class="view hidden">
-                <div class="section-heading">
-                    <div>
-                        <h2>Attendance Management</h2>
-                        <p>Review attendance records.</p>
+                            <div>
+                                <p>Teachers</p>
+                                <h2 id="adminTeacherCount">0</h2>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon green">✓</div>
+
+                            <div>
+                                <p>Attendance Records</p>
+                                <h2 id="adminAttendanceCount">0</h2>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon orange">▤</div>
+
+                            <div>
+                                <p>Grade Records</p>
+                                <h2 id="adminReportCount">0</h2>
+                            </div>
+                        </div>
+
                     </div>
-                </div>
 
-                <div id="attendanceStats" class="stats-grid"></div>
 
-                <div class="content-card">
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Student ID</th>
-                                    <th>Student Name</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="attendanceTable"></tbody>
-                        </table>
+                    <div class="panel">
+
+                        <h3>System Information</h3>
+
+                        <div class="system-info">
+
+                            <div>
+                                <span>Application</span>
+                                <strong>CampusCore</strong>
+                            </div>
+
+                            <div>
+                                <span>Application Type</span>
+                                <strong>Frontend Demo</strong>
+                            </div>
+
+                            <div>
+                                <span>Storage</span>
+                                <strong>Browser LocalStorage</strong>
+                            </div>
+
+                            <div>
+                                <span>Current Role</span>
+                                <strong id="adminCurrentRole">Admin</strong>
+                            </div>
+
+                        </div>
+
                     </div>
-                </div>
 
-                <div id="addAttendanceSection" class="content-card">
-                    <h2>Mark Attendance</h2>
-                    <form id="attendanceForm" class="form-grid">
+
+                    <div class="panel">
+
+                        <h3>Data Management</h3>
+
+                        <p class="muted-text">
+                            Export a JSON backup of the current browser data.
+                        </p>
+
+                        <button id="exportDataBtn" class="primary-btn">
+                            Export Data
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- PROFILE -->
+                <section id="profileView" class="view-section hidden">
+
+                    <div class="section-heading">
+
                         <div>
-                            <label for="attendanceStudentId">Student ID</label>
-                            <select id="attendanceStudentId" required></select>
+                            <h2>My Profile</h2>
+
+                            <p>
+                                View your account information.
+                            </p>
                         </div>
-                        <div>
-                            <label for="attendanceDate">Date</label>
-                            <input id="attendanceDate" type="date" required>
+
+                    </div>
+
+
+                    <div class="profile-card">
+
+                        <div class="profile-avatar" id="profileAvatar">
+                            U
                         </div>
-                        <div>
-                            <label for="attendanceStatus">Status</label>
-                            <select id="attendanceStatus" required>
-                                <option value="Present">Present</option>
-                                <option value="Absent">Absent</option>
-                            </select>
+
+                        <h2 id="profileName">User Name</h2>
+
+                        <p id="profileRole" class="profile-role">User Role</p>
+
+                        <div class="profile-details">
+
+                            <div>
+                                <span>User ID</span>
+                                <strong id="profileId">-</strong>
+                            </div>
+
+                            <div>
+                                <span>Email</span>
+                                <strong id="profileEmail">-</strong>
+                            </div>
+
+                            <div>
+                                <span>Department</span>
+                                <strong id="profileDepartment">-</strong>
+                            </div>
+
                         </div>
-                        <div class="form-action">
-                            <button type="submit" class="primary-button">Save Attendance</button>
-                        </div>
-                    </form>
-                </div>
-            </section>
 
-
-            <!-- MY ACADEMICS -->
-            <section id="myAcademicsView" class="view hidden">
-                <div class="section-heading">
-                    <div>
-                        <h2>My Academics</h2>
-                        <p>Your marks, grades, and attendance.</p>
                     </div>
-                </div>
 
-                <div id="studentStats" class="stats-grid"></div>
-
-                <div class="content-card">
-                    <h2>My Marks & Grades</h2>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Subject</th>
-                                    <th>Marks</th>
-                                    <th>Total</th>
-                                    <th>Percentage</th>
-                                    <th>Grade</th>
-                                </tr>
-                            </thead>
-                            <tbody id="myReportsTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="content-card">
-                    <h2>My Attendance</h2>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Student ID</th>
-                                </tr>
-                            </thead>
-                            <tbody id="myAttendanceTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+                </section>
 
 
-            <!-- ADMINISTRATION -->
-            <section id="adminView" class="view hidden">
-                <div class="section-heading">
-                    <div>
-                        <h2>Administration</h2>
-                        <p>Summary of the system's demonstration data.</p>
-                    </div>
-                </div>
-                <div id="adminStats" class="stats-grid"></div>
+                <!-- TOAST MESSAGE -->
+                <div id="toast" class="toast"></div>
 
-                <div class="content-card">
-                    <h2>System Information</h2>
-                    <p>This is a browser-based demonstration. It does not connect to a university database.</p>
-                </div>
-            </section>
+                <footer class="footer">
+                    CampusCore. Student Management System.
+                </footer>
 
+            </div>
 
-            <!-- PROFILE -->
-            <section id="profileView" class="view hidden">
-                <div class="section-heading">
-                    <div>
-                        <h2>My Profile</h2>
-                        <p>Your account information.</p>
-                    </div>
-                </div>
-
-                <div class="profile-card">
-                    <div id="profileAvatar" class="profile-avatar">U</div>
-                    <h2 id="profileName">User</h2>
-                    <span id="profileRole" class="role-badge">Role</span>
-
-                    <div class="profile-details">
-                        <div><span>User ID</span><strong id="profileId">—</strong></div>
-                        <div><span>Email</span><strong id="profileEmail">—</strong></div>
-                        <div><span>Department</span><strong id="profileDepartment">—</strong></div>
-                        <div><span>Semester / Position</span><strong id="profileSemester">—</strong></div>
-                    </div>
-                </div>
-            </section>
-
-            <footer class="footer">
-                CampusCore Student Management System · Frontend Demo
-            </footer>
         </main>
+
     </div>
 
+
+    <script src="script.js"></script>
+
 </body>
+
 </html>
