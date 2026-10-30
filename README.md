@@ -42,23 +42,23 @@ Other demo students use `student123`. Account data is stored in the database for
 4. As an administrator, use **Teachers** to add and search teacher records. Administrators can delete teachers.
 5. As an administrator or teacher, use **Reports & Grades** to record marks and search grades.
 6. As an administrator or teacher, use **Attendance** to record attendance by student and date. A student can view their own academic and attendance information.
-7. As an administrator, use **Administration → Import People from Excel** to import people, or **Export Data** to download a JSON backup.
+7. As an administrator, use **Administration → Import Data from Excel** to upload student, teacher, marks, and attendance rows, or **Export Data** to download a JSON backup.
 8. Use **Logout** to end the current browser session.
 
 ### Spreadsheet import columns
 
-Upload `.xlsx`, `.xls`, or `.csv`. The first worksheet is read. Header names are case-insensitive; spaces and punctuation are ignored. Required columns:
+For Excel workbooks, use the separate `Students`, `Teachers`, `Marks`, and `Attendance` tabs. CampusCore imports all four tabs. It infers the account role from the Students or Teachers tab. Header names are case-insensitive; spaces and punctuation are ignored.
 
-| Column | Required for | Example |
+| Tab | Columns | Rules |
 | --- | --- | --- |
-| `ID` | Everyone | `STU2001` |
-| `name` | Everyone | `Maya Patel` |
-| `email` | Everyone | `maya@example.com` |
-| `department` | Everyone | `Computer Science` |
-| `role` | Everyone | `student` or `teacher` |
-| `year` | Students | `1st Year` |
-| `designation` | Teachers (optional) | `Lecturer` |
-| `phone` | Teachers (optional) | `9876543210` |
+| `Students` | `ID (PK)`, `name`, `email`, `department`, `year` | All fields required. `ID` is the student primary key and references `users.id`. |
+| `Teachers` | `ID (PK)`, `name`, `email`, `department`, `designation`, `phone` | ID, name, email, and department required. Designation and phone are optional. `ID` is the teacher primary key and references `users.id`. |
+| `Marks` | `ID (PK)`, `studentId (FK)`, `subject`, `marks` | Leave `ID` blank to generate the grade primary key. `studentId` is a foreign key to `Students.ID`. Marks must be between 0 and 100. |
+| `Attendance` | `ID (PK)`, `studentId (FK)`, `date`, `status` | Leave `ID` blank to generate the attendance primary key. `studentId` is a foreign key to `Students.ID`. Use `YYYY-MM-DD` for date and `Present` or `Absent` for status. |
+
+The marks and attendance `studentId` values must match a student already in the database or a row on the Students tab. The importer processes student rows before marks and attendance, so those references can point to students added in the same workbook. Duplicate IDs, duplicate attendance for the same student/date, and invalid or incomplete rows are skipped.
+
+CSV imports use a single sheet and must include a `role` column. CSV currently imports student/teacher people rows; use an Excel workbook for marks and attendance.
 
 Each imported account's initial password is the first word of its name (for example, `Maya Patel` gets `Maya`). Duplicate IDs/emails and invalid or incomplete rows are skipped. Import requires an internet connection to load the Excel parsing library.
 

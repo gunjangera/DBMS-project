@@ -1986,7 +1986,7 @@ $("#importPeopleBtn").addEventListener("click", async function () {
     const file = fileInput.files[0];
 
     if (currentUser?.role !== "admin") {
-        showToast("Only administrators can import people.", "error");
+        showToast("Only administrators can import spreadsheet data.", "error");
         return;
     }
 
@@ -2002,19 +2002,53 @@ $("#importPeopleBtn").addEventListener("click", async function () {
 
     try {
         const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "", raw: false });
+        const importSheets = workbook.SheetNames.filter(sheetName =>
+            /^(students?|teachers?|marks?|grades?|attendance)(\s|$)/i.test(sheetName.trim())
+        );
+        const sourceSheets = importSheets.length ? importSheets : workbook.SheetNames.slice(0, 1);
+        const rows = sourceSheets.flatMap(sheetName => {
+            const normalizedName = sheetName.trim().toLowerCase();
+            const sheetType = /^teachers?(\s|$)/.test(normalizedName) ? "teacher"
+                : /^students?(\s|$)/.test(normalizedName) ? "student"
+                : /^(marks?|grades?)(\s|$)/.test(normalizedName) ? "marks"
+                : normalizedName.startsWith("attendance") ? "attendance" : "mixed";
+            return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "", raw: false })
+                .map(row => ({ row, sheetType }));
+        }).sort((a, b) => {
+            const priority = type => ["student", "teacher", "mixed"].includes(type) ? 0 : type === "marks" ? 1 : 2;
+            return priority(a.sheetType) - priority(b.sheetType);
+        });
         const importedIds = new Set();
         const importedEmails = new Set();
+        const reportIds = new Set(reports.map(report => String(report.id)));
+        const attendanceIds = new Set(attendance.map(record => String(record.id)));
+        const attendanceKeys = new Set(attendance.map(record => `${record.studentId}|${record.date}`));
+        let generatedId = Date.now();
+        const nextId = (requestedId, usedIds) => {
+            if (requestedId) {
+                const numericId = Number(requestedId);
+                if (!Number.isSafeInteger(numericId) || numericId < 1 || usedIds.has(String(numericId))) return null;
+                usedIds.add(String(numericId));
+                return numericId;
+            }
+            while (usedIds.has(String(generatedId))) generatedId += 1;
+            const id = generatedId++;
+            usedIds.add(String(id));
+            return id;
+        };
         let addedStudents = 0;
         let addedTeachers = 0;
+        let addedMarks = 0;
+        let addedAttendance = 0;
         let skipped = 0;
 
-        rows.forEach(row => {
+        rows.forEach(({ row, sheetType }) => {
             const values = {};
             Object.entries(row).forEach(([key, value]) => {
                 values[String(key).trim().toLowerCase().replace(/[^a-z0-9]/g, "")] = String(value).trim();
             });
+
+            if (Object.values(values).every(value => !value)) return;
 
             const get = (...keys) => {
                 for (const key of keys) {
@@ -2024,12 +2058,58 @@ $("#importPeopleBtn").addEventListener("click", async function () {
                 return "";
             };
 
-            const id = get("id", "userid", "studentid", "teacherid").toUpperCase();
+            if (sheetType === "marks") {
+                const studentId = get("studentid", "studentidfk", "student").toUpperCase();
+                const subject = get("subject", "course");
+                const rawMarks = get("marks", "score");
+                const marksValue = Number(rawMarks);
+                const studentExists = students.some(student => student.id.toUpperCase() === studentId);
+                if (!studentId || !studentExists || !subject || !rawMarks || !Number.isFinite(marksValue) || marksValue < 0 || marksValue > 100) {
+                    skipped += 1;
+                    return;
+                }
+                const id = nextId(get("id", "idpk", "markid", "reportid"), reportIds);
+                if (!id) {
+                    skipped += 1;
+                    return;
+                }
+                reports.push({ id, studentId, subject, marks: marksValue });
+                addedMarks += 1;
+                return;
+            }
+
+            if (sheetType === "attendance") {
+                const studentId = get("studentid", "studentidfk", "student").toUpperCase();
+                const rawDate = get("date", "attendancedate");
+                const parsedDate = new Date(rawDate);
+                const date = Number.isNaN(parsedDate.getTime()) ? "" : parsedDate.toISOString().slice(0, 10);
+                const statusValue = get("status").toLowerCase();
+                const recordStatus = statusValue === "present" ? "Present" : statusValue === "absent" ? "Absent" : "";
+                const studentExists = students.some(student => student.id.toUpperCase() === studentId);
+                const attendanceKey = `${studentId}|${date}`;
+                const duplicateDate = attendanceKeys.has(attendanceKey);
+                if (!studentId || !studentExists || !date || !recordStatus || duplicateDate) {
+                    skipped += 1;
+                    return;
+                }
+                const id = nextId(get("id", "idpk", "attendanceid"), attendanceIds);
+                if (!id) {
+                    skipped += 1;
+                    return;
+                }
+                attendance.push({ id, studentId, date, status: recordStatus });
+                attendanceKeys.add(attendanceKey);
+                addedAttendance += 1;
+                return;
+            }
+
+            const id = get("id", "idpk", "userid", "studentid", "teacherid").toUpperCase();
             const name = get("name", "fullname");
             const email = get("email", "emailaddress").toLowerCase();
             const department = get("department", "dept");
             const roleText = get("role", "type", "usertype").toLowerCase();
-            const role = roleText.startsWith("teach") ? "teacher" : roleText.startsWith("stud") ? "student" : "";
+            const role = roleText.startsWith("teach") ? "teacher"
+                : roleText.startsWith("stud") ? "student" : ["student", "teacher"].includes(sheetType) ? sheetType : "";
             const emailTaken = users.some(user => user.email.toLowerCase() === email)
                 || importedEmails.has(email);
 
@@ -2071,10 +2151,12 @@ $("#importPeopleBtn").addEventListener("click", async function () {
         save("campuscore_users", users);
         save("campuscore_students", students);
         save("campuscore_teachers", teachers);
+        save("campuscore_reports", reports);
+        save("campuscore_attendance", attendance);
         fileInput.value = "";
-        status.textContent = `Added ${addedStudents} students and ${addedTeachers} teachers. Skipped ${skipped} row(s).`;
+        status.textContent = `Added ${addedStudents} students, ${addedTeachers} teachers, ${addedMarks} marks, and ${addedAttendance} attendance records. Skipped ${skipped} row(s).`;
         renderAll();
-        showToast(`Import complete: ${addedStudents + addedTeachers} people added.`);
+        showToast(`Import complete: ${addedStudents + addedTeachers + addedMarks + addedAttendance} records added.`);
     } catch (error) {
         console.error("Could not import spreadsheet:", error);
         showToast("Could not read this file. Check that it is a valid Excel or CSV sheet.", "error");

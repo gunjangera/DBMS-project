@@ -1073,13 +1073,13 @@
 
                         <hr class="panel-divider">
 
-                        <h3>Import People from Excel</h3>
+                        <h3>Import Data from Excel</h3>
                         <p class="muted-text">
-                            Upload an .xlsx, .xls, or .csv file. Include columns for ID, name, email, department, and role (student or teacher). Students also need year; teachers may include designation and phone. Each account’s initial password will be the first name.
+                            Upload an .xlsx, .xls, or .csv file. In workbooks, use the Students and Teachers tabs for accounts, Marks for grades, and Attendance for attendance records. Student IDs on the Marks and Attendance tabs must match an ID on the Students tab or an existing student. Blank record IDs are generated during import. CSV files should include a role column and support people rows only. Each imported account’s initial password will be the first name.
                         </p>
                         <label class="file-label" for="peopleImportFile">Excel or CSV file</label>
                         <input id="peopleImportFile" type="file" accept=".xlsx,.xls,.csv">
-                        <button id="importPeopleBtn" class="primary-btn" type="button">Import People</button>
+                        <button id="importPeopleBtn" class="primary-btn" type="button">Import Spreadsheet Data</button>
                         <p id="importPeopleStatus" class="muted-text" aria-live="polite"></p>
 
                     </div>
