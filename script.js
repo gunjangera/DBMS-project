@@ -408,6 +408,13 @@ function startApplication() {
 
     renderAll();
 
+    appViewHistory = ["dashboard"];
+    appViewIndex = 0;
+    history.replaceState(
+        { campusCoreView: "dashboard" },
+        "",
+        window.location.href
+    );
     navigate("dashboard");
 
 }
@@ -469,7 +476,7 @@ function setupUser() {
 
     $("#addStudentSection").classList.toggle(
         "hidden",
-        currentUser.role !== "admin"
+        !["admin", "teacher"].includes(currentUser.role)
     );
 
     $("#addTeacherSection").classList.toggle(
@@ -502,15 +509,45 @@ function setupUser() {
    NAVIGATION
 ===================================== */
 
-function navigate(view) {
+$("#brandHome").addEventListener("click", function () {
+    navigate("dashboard");
+});
+
+$("#topbarAvatar").addEventListener("click", function () {
+    navigate("profile");
+});
+
+let appViewHistory = ["dashboard"];
+let appViewIndex = 0;
+
+function navigate(view, options = {}) {
 
     if (!allowed(view)) {
         return;
     }
 
+    const currentSection = $(".view-section:not(.hidden)");
+    const currentView = currentSection?.id.replace("View", "");
+
+    if (currentView === view) {
+        return;
+    }
+
+    if (!options.fromHistory) {
+        appViewHistory = appViewHistory.slice(0, appViewIndex + 1);
+        appViewHistory.push(view);
+        appViewIndex = appViewHistory.length - 1;
+        history.pushState(
+            { campusCoreView: view },
+            "",
+            window.location.href
+        );
+    }
+
     $$(".view-section").forEach(section => {
 
         section.classList.add("hidden");
+        section.classList.remove("slide-back");
 
     });
 
@@ -519,6 +556,15 @@ function navigate(view) {
 
     if (target) {
         target.classList.remove("hidden");
+
+        if (options.direction === "back") {
+            target.classList.add("slide-back");
+            target.addEventListener("animationend", event => {
+                if (event.target === target) {
+                    target.classList.remove("slide-back");
+                }
+            }, { once: true });
+        }
     }
 
 
@@ -560,6 +606,62 @@ $$("[data-goto]").forEach(button => {
 
 });
 
+window.addEventListener("popstate", event => {
+    const view = event.state?.campusCoreView;
+
+    if (!view || !allowed(view)) {
+        return;
+    }
+
+    let direction = "forward";
+
+    if (appViewHistory[appViewIndex - 1] === view) {
+        appViewIndex -= 1;
+        direction = "back";
+    } else if (appViewHistory[appViewIndex + 1] === view) {
+        appViewIndex += 1;
+    } else {
+        appViewHistory = [view];
+        appViewIndex = 0;
+    }
+
+    navigate(view, { fromHistory: true, direction });
+});
+
+const contentArea = $(".content-area");
+let swipeStart = null;
+
+contentArea.addEventListener("touchstart", event => {
+    if (event.touches.length !== 1) {
+        swipeStart = null;
+        return;
+    }
+
+    const bounds = contentArea.getBoundingClientRect();
+    const touch = event.touches[0];
+
+    swipeStart = touch.clientX - bounds.left <= 32
+        ? { x: touch.clientX, y: touch.clientY }
+        : null;
+}, { passive: true });
+
+contentArea.addEventListener("touchend", event => {
+    if (!swipeStart || appViewIndex === 0) {
+        swipeStart = null;
+        return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - swipeStart.x;
+    const deltaY = touch.clientY - swipeStart.y;
+
+    if (deltaX > 90 && Math.abs(deltaY) < 70) {
+        history.back();
+    }
+
+    swipeStart = null;
+}, { passive: true });
+
 
 /* =====================================
    SIDEBAR TOGGLE
@@ -590,6 +692,11 @@ function applyTheme() {
 
     $("#themeText").textContent =
         theme === "dark" ? "Light Mode" : "Dark Mode";
+
+    $("#themeToggle").setAttribute(
+        "aria-label",
+        theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+    );
 
 }
 
@@ -844,9 +951,9 @@ $("#studentForm").addEventListener("submit", function (event) {
 
     event.preventDefault();
 
-    if (currentUser.role !== "admin") {
+    if (!["admin", "teacher"].includes(currentUser.role)) {
 
-        showToast("Only administrators can add students.", "error");
+        showToast("Only teachers and administrators can add students.", "error");
 
         return;
     }

@@ -76,16 +76,16 @@
         <!-- SIDEBAR -->
         <aside id="sidebar" class="sidebar">
 
-            <div class="sidebar-brand">
+            <button id="brandHome" class="sidebar-brand brand-home" type="button" aria-label="CampusCore home — open Dashboard">
 
-                <div class="brand-logo small-logo">CC</div>
+                <span class="brand-logo small-logo" aria-hidden="true">CC</span>
 
-                <div>
-                    <h2>CampusCore</h2>
-                    <p>Management Portal</p>
-                </div>
+                <span class="brand-copy">
+                    <span class="brand-title">CampusCore</span>
+                    <span class="brand-caption">Management Portal</span>
+                </span>
 
-            </div>
+            </button>
 
             <div class="sidebar-user">
 
@@ -146,11 +146,6 @@
 
             <div class="sidebar-bottom">
 
-                <button id="themeToggle" class="sidebar-action">
-                    <span id="themeIcon">☾</span>
-                    <span id="themeText">Dark Mode</span>
-                </button>
-
                 <button id="logoutBtn" class="sidebar-action logout-btn">
                     <span>⇥</span>
                     Logout
@@ -184,9 +179,14 @@
 
                     <span id="currentDate" class="date-label"></span>
 
-                    <div class="topbar-avatar" id="topbarAvatar">
+                    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch to dark mode">
+                        <span id="themeIcon" aria-hidden="true">☾</span>
+                        <span id="themeText">Dark Mode</span>
+                    </button>
+
+                    <button class="topbar-avatar" id="topbarAvatar" type="button" aria-label="Open my profile details" title="Open my profile">
                         U
-                    </div>
+                    </button>
 
                 </div>
 
