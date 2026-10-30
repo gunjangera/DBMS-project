@@ -45,6 +45,29 @@ function load(key, fallback) {
 
 function save(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+    if (databaseReady && ["campuscore_users", "campuscore_students", "campuscore_teachers", "campuscore_reports", "campuscore_attendance"].includes(key)) {
+        queueDatabaseSave();
+    }
+}
+
+let databaseReady = false;
+let databaseSaveTimer;
+
+function queueDatabaseSave() {
+    clearTimeout(databaseSaveTimer);
+    databaseSaveTimer = setTimeout(async () => {
+        try {
+            const response = await fetch("/api/state", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ users, students, teachers, reports, attendance })
+            });
+            if (!response.ok) throw new Error("Database save failed");
+        } catch (error) {
+            console.error("Could not save to the database:", error);
+            showToast("Database save failed. Keep the server running and try again.", "error");
+        }
+    }, 150);
 }
 
 
@@ -495,13 +518,20 @@ function setupUser() {
     );
 
 
+    updateClock();
+
+}
+
+function updateClock() {
     $("#currentDate").textContent = new Date()
-        .toLocaleDateString("en-IN", {
+        .toLocaleString("en-IN", {
             day: "numeric",
             month: "short",
-            year: "numeric"
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
         });
-
 }
 
 
@@ -1947,6 +1977,112 @@ $("#exportDataBtn").addEventListener("click", function () {
 
 
 /* =====================================
+   IMPORT PEOPLE FROM EXCEL
+===================================== */
+
+$("#importPeopleBtn").addEventListener("click", async function () {
+    const fileInput = $("#peopleImportFile");
+    const status = $("#importPeopleStatus");
+    const file = fileInput.files[0];
+
+    if (currentUser?.role !== "admin") {
+        showToast("Only administrators can import people.", "error");
+        return;
+    }
+
+    if (!file) {
+        showToast("Choose an Excel or CSV file first.", "error");
+        return;
+    }
+
+    if (!window.XLSX) {
+        showToast("The spreadsheet reader could not be loaded. Check your internet connection and try again.", "error");
+        return;
+    }
+
+    try {
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "", raw: false });
+        const importedIds = new Set();
+        const importedEmails = new Set();
+        let addedStudents = 0;
+        let addedTeachers = 0;
+        let skipped = 0;
+
+        rows.forEach(row => {
+            const values = {};
+            Object.entries(row).forEach(([key, value]) => {
+                values[String(key).trim().toLowerCase().replace(/[^a-z0-9]/g, "")] = String(value).trim();
+            });
+
+            const get = (...keys) => {
+                for (const key of keys) {
+                    const value = values[key];
+                    if (value) return value;
+                }
+                return "";
+            };
+
+            const id = get("id", "userid", "studentid", "teacherid").toUpperCase();
+            const name = get("name", "fullname");
+            const email = get("email", "emailaddress").toLowerCase();
+            const department = get("department", "dept");
+            const roleText = get("role", "type", "usertype").toLowerCase();
+            const role = roleText.startsWith("teach") ? "teacher" : roleText.startsWith("stud") ? "student" : "";
+            const emailTaken = users.some(user => user.email.toLowerCase() === email)
+                || importedEmails.has(email);
+
+            if (!id || !name || !email || !department || !role
+                || users.some(user => user.id.toUpperCase() === id)
+                || importedIds.has(id) || emailTaken) {
+                skipped += 1;
+                return;
+            }
+
+            const firstName = name.split(/\s+/)[0];
+            const person = { id, name, email, department };
+            const user = { id, password: firstName, name, email, role, department };
+
+            if (role === "student") {
+                const year = get("year", "academicyear", "studyyear");
+                if (!year) {
+                    skipped += 1;
+                    return;
+                }
+                person.year = year;
+                user.year = year;
+                students.push(person);
+                addedStudents += 1;
+            } else {
+                const designation = get("designation", "title");
+                const phone = get("phone", "phonenumber", "mobile");
+                if (designation) person.designation = user.designation = designation;
+                if (phone) person.phone = user.phone = phone;
+                teachers.push(person);
+                addedTeachers += 1;
+            }
+
+            users.push(user);
+            importedIds.add(id);
+            importedEmails.add(email);
+        });
+
+        save("campuscore_users", users);
+        save("campuscore_students", students);
+        save("campuscore_teachers", teachers);
+        fileInput.value = "";
+        status.textContent = `Added ${addedStudents} students and ${addedTeachers} teachers. Skipped ${skipped} row(s).`;
+        renderAll();
+        showToast(`Import complete: ${addedStudents + addedTeachers} people added.`);
+    } catch (error) {
+        console.error("Could not import spreadsheet:", error);
+        showToast("Could not read this file. Check that it is a valid Excel or CSV sheet.", "error");
+    }
+});
+
+
+/* =====================================
    RENDER EVERYTHING
 ===================================== */
 
@@ -1969,15 +2105,49 @@ function renderAll() {
 }
 
 
+async function initializeDatabase() {
+    try {
+        const response = await fetch("/api/state");
+        if (!response.ok) throw new Error("Database server is unavailable");
+        const state = await response.json();
+        const hasDatabaseData = state.users.length > 0;
+
+        if (hasDatabaseData) {
+            users = state.users;
+            students = state.students;
+            teachers = state.teachers;
+            reports = state.reports;
+            attendance = state.attendance;
+            ["users", "students", "teachers", "reports", "attendance"].forEach(collection => {
+                localStorage.setItem(`campuscore_${collection}`, JSON.stringify(state[collection]));
+            });
+            currentUser = users.find(user => user.id === currentUser?.id) || null;
+        } else {
+            // First run: seed SQLite from existing browser data (or the demo defaults).
+            queueDatabaseSave();
+        }
+
+        databaseReady = true;
+    } catch (error) {
+        console.error("Database connection failed:", error);
+        showToast("Database server is offline. Changes will stay in this browser only.", "error");
+    }
+
+    startApplication();
+}
+
+
 /* =====================================
    DEFAULT FORM VALUES
 ===================================== */
 
 $("#attendanceDate").value = today();
+updateClock();
+setInterval(updateClock, 1000);
 
 
 /* =====================================
    START OR RESTORE SESSION
 ===================================== */
 
-startApplication();
+initializeDatabase();

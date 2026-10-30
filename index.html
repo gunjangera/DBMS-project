@@ -1071,6 +1071,17 @@
                             Export Data
                         </button>
 
+                        <hr class="panel-divider">
+
+                        <h3>Import People from Excel</h3>
+                        <p class="muted-text">
+                            Upload an .xlsx, .xls, or .csv file. Include columns for ID, name, email, department, and role (student or teacher). Students also need year; teachers may include designation and phone. Each account’s initial password will be the first name.
+                        </p>
+                        <label class="file-label" for="peopleImportFile">Excel or CSV file</label>
+                        <input id="peopleImportFile" type="file" accept=".xlsx,.xls,.csv">
+                        <button id="importPeopleBtn" class="primary-btn" type="button">Import People</button>
+                        <p id="importPeopleStatus" class="muted-text" aria-live="polite"></p>
+
                     </div>
 
                 </section>
@@ -1141,6 +1152,7 @@
     </div>
 
 
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 
 </body>

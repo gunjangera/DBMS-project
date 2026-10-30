@@ -708,6 +708,31 @@ select:focus-visible {
     font-size: 16px;
 }
 
+.panel-divider {
+    margin: 24px 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+}
+
+.file-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#peopleImportFile {
+    display: block;
+    max-width: 100%;
+    margin-bottom: 14px;
+    color: var(--muted);
+}
+
+#importPeopleStatus {
+    margin: 12px 0 0;
+}
+
 .muted-text {
     margin-bottom: 15px;
 
