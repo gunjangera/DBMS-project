@@ -45,6 +45,29 @@ function load(key, fallback) {
 
 function save(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+    if (databaseReady && ["campuscore_users", "campuscore_students", "campuscore_teachers", "campuscore_reports", "campuscore_attendance"].includes(key)) {
+        queueDatabaseSave();
+    }
+}
+
+let databaseReady = false;
+let databaseSaveTimer;
+
+function queueDatabaseSave() {
+    clearTimeout(databaseSaveTimer);
+    databaseSaveTimer = setTimeout(async () => {
+        try {
+            const response = await fetch("/api/state", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ users, students, teachers, reports, attendance })
+            });
+            if (!response.ok) throw new Error("Database save failed");
+        } catch (error) {
+            console.error("Could not save to the database:", error);
+            showToast("Database save failed. Keep the server running and try again.", "error");
+        }
+    }, 150);
 }
 
 
@@ -408,6 +431,13 @@ function startApplication() {
 
     renderAll();
 
+    appViewHistory = ["dashboard"];
+    appViewIndex = 0;
+    history.replaceState(
+        { campusCoreView: "dashboard" },
+        "",
+        window.location.href
+    );
     navigate("dashboard");
 
 }
@@ -469,7 +499,7 @@ function setupUser() {
 
     $("#addStudentSection").classList.toggle(
         "hidden",
-        currentUser.role !== "admin"
+        !["admin", "teacher"].includes(currentUser.role)
     );
 
     $("#addTeacherSection").classList.toggle(
@@ -488,13 +518,20 @@ function setupUser() {
     );
 
 
+    updateClock();
+
+}
+
+function updateClock() {
     $("#currentDate").textContent = new Date()
-        .toLocaleDateString("en-IN", {
+        .toLocaleString("en-IN", {
             day: "numeric",
             month: "short",
-            year: "numeric"
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
         });
-
 }
 
 
@@ -502,15 +539,45 @@ function setupUser() {
    NAVIGATION
 ===================================== */
 
-function navigate(view) {
+$("#brandHome").addEventListener("click", function () {
+    navigate("dashboard");
+});
+
+$("#topbarAvatar").addEventListener("click", function () {
+    navigate("profile");
+});
+
+let appViewHistory = ["dashboard"];
+let appViewIndex = 0;
+
+function navigate(view, options = {}) {
 
     if (!allowed(view)) {
         return;
     }
 
+    const currentSection = $(".view-section:not(.hidden)");
+    const currentView = currentSection?.id.replace("View", "");
+
+    if (currentView === view) {
+        return;
+    }
+
+    if (!options.fromHistory) {
+        appViewHistory = appViewHistory.slice(0, appViewIndex + 1);
+        appViewHistory.push(view);
+        appViewIndex = appViewHistory.length - 1;
+        history.pushState(
+            { campusCoreView: view },
+            "",
+            window.location.href
+        );
+    }
+
     $$(".view-section").forEach(section => {
 
         section.classList.add("hidden");
+        section.classList.remove("slide-back");
 
     });
 
@@ -519,6 +586,15 @@ function navigate(view) {
 
     if (target) {
         target.classList.remove("hidden");
+
+        if (options.direction === "back") {
+            target.classList.add("slide-back");
+            target.addEventListener("animationend", event => {
+                if (event.target === target) {
+                    target.classList.remove("slide-back");
+                }
+            }, { once: true });
+        }
     }
 
 
@@ -560,6 +636,62 @@ $$("[data-goto]").forEach(button => {
 
 });
 
+window.addEventListener("popstate", event => {
+    const view = event.state?.campusCoreView;
+
+    if (!view || !allowed(view)) {
+        return;
+    }
+
+    let direction = "forward";
+
+    if (appViewHistory[appViewIndex - 1] === view) {
+        appViewIndex -= 1;
+        direction = "back";
+    } else if (appViewHistory[appViewIndex + 1] === view) {
+        appViewIndex += 1;
+    } else {
+        appViewHistory = [view];
+        appViewIndex = 0;
+    }
+
+    navigate(view, { fromHistory: true, direction });
+});
+
+const contentArea = $(".content-area");
+let swipeStart = null;
+
+contentArea.addEventListener("touchstart", event => {
+    if (event.touches.length !== 1) {
+        swipeStart = null;
+        return;
+    }
+
+    const bounds = contentArea.getBoundingClientRect();
+    const touch = event.touches[0];
+
+    swipeStart = touch.clientX - bounds.left <= 32
+        ? { x: touch.clientX, y: touch.clientY }
+        : null;
+}, { passive: true });
+
+contentArea.addEventListener("touchend", event => {
+    if (!swipeStart || appViewIndex === 0) {
+        swipeStart = null;
+        return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - swipeStart.x;
+    const deltaY = touch.clientY - swipeStart.y;
+
+    if (deltaX > 90 && Math.abs(deltaY) < 70) {
+        history.back();
+    }
+
+    swipeStart = null;
+}, { passive: true });
+
 
 /* =====================================
    SIDEBAR TOGGLE
@@ -590,6 +722,11 @@ function applyTheme() {
 
     $("#themeText").textContent =
         theme === "dark" ? "Light Mode" : "Dark Mode";
+
+    $("#themeToggle").setAttribute(
+        "aria-label",
+        theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+    );
 
 }
 
@@ -844,9 +981,9 @@ $("#studentForm").addEventListener("submit", function (event) {
 
     event.preventDefault();
 
-    if (currentUser.role !== "admin") {
+    if (!["admin", "teacher"].includes(currentUser.role)) {
 
-        showToast("Only administrators can add students.", "error");
+        showToast("Only teachers and administrators can add students.", "error");
 
         return;
     }
@@ -1840,6 +1977,194 @@ $("#exportDataBtn").addEventListener("click", function () {
 
 
 /* =====================================
+   IMPORT PEOPLE FROM EXCEL
+===================================== */
+
+$("#importPeopleBtn").addEventListener("click", async function () {
+    const fileInput = $("#peopleImportFile");
+    const status = $("#importPeopleStatus");
+    const file = fileInput.files[0];
+
+    if (currentUser?.role !== "admin") {
+        showToast("Only administrators can import spreadsheet data.", "error");
+        return;
+    }
+
+    if (!file) {
+        showToast("Choose an Excel or CSV file first.", "error");
+        return;
+    }
+
+    if (!window.XLSX) {
+        showToast("The spreadsheet reader could not be loaded. Check your internet connection and try again.", "error");
+        return;
+    }
+
+    try {
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+        const importSheets = workbook.SheetNames.filter(sheetName =>
+            /^(students?|teachers?|marks?|grades?|attendance)(\s|$)/i.test(sheetName.trim())
+        );
+        const sourceSheets = importSheets.length ? importSheets : workbook.SheetNames.slice(0, 1);
+        const rows = sourceSheets.flatMap(sheetName => {
+            const normalizedName = sheetName.trim().toLowerCase();
+            const sheetType = /^teachers?(\s|$)/.test(normalizedName) ? "teacher"
+                : /^students?(\s|$)/.test(normalizedName) ? "student"
+                : /^(marks?|grades?)(\s|$)/.test(normalizedName) ? "marks"
+                : normalizedName.startsWith("attendance") ? "attendance" : "mixed";
+            return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "", raw: false })
+                .map(row => ({ row, sheetType }));
+        }).sort((a, b) => {
+            const priority = type => ["student", "teacher", "mixed"].includes(type) ? 0 : type === "marks" ? 1 : 2;
+            return priority(a.sheetType) - priority(b.sheetType);
+        });
+        const importedIds = new Set();
+        const importedEmails = new Set();
+        const reportIds = new Set(reports.map(report => String(report.id)));
+        const attendanceIds = new Set(attendance.map(record => String(record.id)));
+        const attendanceKeys = new Set(attendance.map(record => `${record.studentId}|${record.date}`));
+        let generatedId = Date.now();
+        const nextId = (requestedId, usedIds) => {
+            if (requestedId) {
+                const numericId = Number(requestedId);
+                if (!Number.isSafeInteger(numericId) || numericId < 1 || usedIds.has(String(numericId))) return null;
+                usedIds.add(String(numericId));
+                return numericId;
+            }
+            while (usedIds.has(String(generatedId))) generatedId += 1;
+            const id = generatedId++;
+            usedIds.add(String(id));
+            return id;
+        };
+        let addedStudents = 0;
+        let addedTeachers = 0;
+        let addedMarks = 0;
+        let addedAttendance = 0;
+        let skipped = 0;
+
+        rows.forEach(({ row, sheetType }) => {
+            const values = {};
+            Object.entries(row).forEach(([key, value]) => {
+                values[String(key).trim().toLowerCase().replace(/[^a-z0-9]/g, "")] = String(value).trim();
+            });
+
+            if (Object.values(values).every(value => !value)) return;
+
+            const get = (...keys) => {
+                for (const key of keys) {
+                    const value = values[key];
+                    if (value) return value;
+                }
+                return "";
+            };
+
+            if (sheetType === "marks") {
+                const studentId = get("studentid", "studentidfk", "student").toUpperCase();
+                const subject = get("subject", "course");
+                const rawMarks = get("marks", "score");
+                const marksValue = Number(rawMarks);
+                const studentExists = students.some(student => student.id.toUpperCase() === studentId);
+                if (!studentId || !studentExists || !subject || !rawMarks || !Number.isFinite(marksValue) || marksValue < 0 || marksValue > 100) {
+                    skipped += 1;
+                    return;
+                }
+                const id = nextId(get("id", "idpk", "markid", "reportid"), reportIds);
+                if (!id) {
+                    skipped += 1;
+                    return;
+                }
+                reports.push({ id, studentId, subject, marks: marksValue });
+                addedMarks += 1;
+                return;
+            }
+
+            if (sheetType === "attendance") {
+                const studentId = get("studentid", "studentidfk", "student").toUpperCase();
+                const rawDate = get("date", "attendancedate");
+                const parsedDate = new Date(rawDate);
+                const date = Number.isNaN(parsedDate.getTime()) ? "" : parsedDate.toISOString().slice(0, 10);
+                const statusValue = get("status").toLowerCase();
+                const recordStatus = statusValue === "present" ? "Present" : statusValue === "absent" ? "Absent" : "";
+                const studentExists = students.some(student => student.id.toUpperCase() === studentId);
+                const attendanceKey = `${studentId}|${date}`;
+                const duplicateDate = attendanceKeys.has(attendanceKey);
+                if (!studentId || !studentExists || !date || !recordStatus || duplicateDate) {
+                    skipped += 1;
+                    return;
+                }
+                const id = nextId(get("id", "idpk", "attendanceid"), attendanceIds);
+                if (!id) {
+                    skipped += 1;
+                    return;
+                }
+                attendance.push({ id, studentId, date, status: recordStatus });
+                attendanceKeys.add(attendanceKey);
+                addedAttendance += 1;
+                return;
+            }
+
+            const id = get("id", "idpk", "userid", "studentid", "teacherid").toUpperCase();
+            const name = get("name", "fullname");
+            const email = get("email", "emailaddress").toLowerCase();
+            const department = get("department", "dept");
+            const roleText = get("role", "type", "usertype").toLowerCase();
+            const role = roleText.startsWith("teach") ? "teacher"
+                : roleText.startsWith("stud") ? "student" : ["student", "teacher"].includes(sheetType) ? sheetType : "";
+            const emailTaken = users.some(user => user.email.toLowerCase() === email)
+                || importedEmails.has(email);
+
+            if (!id || !name || !email || !department || !role
+                || users.some(user => user.id.toUpperCase() === id)
+                || importedIds.has(id) || emailTaken) {
+                skipped += 1;
+                return;
+            }
+
+            const firstName = name.split(/\s+/)[0];
+            const person = { id, name, email, department };
+            const user = { id, password: firstName, name, email, role, department };
+
+            if (role === "student") {
+                const year = get("year", "academicyear", "studyyear");
+                if (!year) {
+                    skipped += 1;
+                    return;
+                }
+                person.year = year;
+                user.year = year;
+                students.push(person);
+                addedStudents += 1;
+            } else {
+                const designation = get("designation", "title");
+                const phone = get("phone", "phonenumber", "mobile");
+                if (designation) person.designation = user.designation = designation;
+                if (phone) person.phone = user.phone = phone;
+                teachers.push(person);
+                addedTeachers += 1;
+            }
+
+            users.push(user);
+            importedIds.add(id);
+            importedEmails.add(email);
+        });
+
+        save("campuscore_users", users);
+        save("campuscore_students", students);
+        save("campuscore_teachers", teachers);
+        save("campuscore_reports", reports);
+        save("campuscore_attendance", attendance);
+        fileInput.value = "";
+        status.textContent = `Added ${addedStudents} students, ${addedTeachers} teachers, ${addedMarks} marks, and ${addedAttendance} attendance records. Skipped ${skipped} row(s).`;
+        renderAll();
+        showToast(`Import complete: ${addedStudents + addedTeachers + addedMarks + addedAttendance} records added.`);
+    } catch (error) {
+        console.error("Could not import spreadsheet:", error);
+        showToast("Could not read this file. Check that it is a valid Excel or CSV sheet.", "error");
+    }
+});
+
+
+/* =====================================
    RENDER EVERYTHING
 ===================================== */
 
@@ -1862,15 +2187,49 @@ function renderAll() {
 }
 
 
+async function initializeDatabase() {
+    try {
+        const response = await fetch("/api/state");
+        if (!response.ok) throw new Error("Database server is unavailable");
+        const state = await response.json();
+        const hasDatabaseData = state.users.length > 0;
+
+        if (hasDatabaseData) {
+            users = state.users;
+            students = state.students;
+            teachers = state.teachers;
+            reports = state.reports;
+            attendance = state.attendance;
+            ["users", "students", "teachers", "reports", "attendance"].forEach(collection => {
+                localStorage.setItem(`campuscore_${collection}`, JSON.stringify(state[collection]));
+            });
+            currentUser = users.find(user => user.id === currentUser?.id) || null;
+        } else {
+            // First run: seed SQLite from existing browser data (or the demo defaults).
+            queueDatabaseSave();
+        }
+
+        databaseReady = true;
+    } catch (error) {
+        console.error("Database connection failed:", error);
+        showToast("Database server is offline. Changes will stay in this browser only.", "error");
+    }
+
+    startApplication();
+}
+
+
 /* =====================================
    DEFAULT FORM VALUES
 ===================================== */
 
 $("#attendanceDate").value = today();
+updateClock();
+setInterval(updateClock, 1000);
 
 
 /* =====================================
    START OR RESTORE SESSION
 ===================================== */
 
-startApplication();
+initializeDatabase();
