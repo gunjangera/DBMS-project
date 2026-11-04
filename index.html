@@ -7,7 +7,7 @@
 
     <title>CampusCore | Student Management System</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 
 <body>
@@ -237,8 +237,8 @@
                             <div class="stat-icon blue">♧</div>
 
                             <div>
-                                <p>Total Teachers</p>
-                                <h2 id="totalTeachers">0</h2>
+                                <p>Departments</p>
+                                <h2 id="totalDepartments">0</h2>
                             </div>
 
                         </div>
@@ -248,8 +248,8 @@
                             <div class="stat-icon green">✓</div>
 
                             <div>
-                                <p>Attendance Records</p>
-                                <h2 id="totalAttendance">0</h2>
+                                <p>Average Grade</p>
+                                <h2 id="averageGrade">0%</h2>
                             </div>
 
                         </div>
@@ -259,15 +259,37 @@
                             <div class="stat-icon orange">▤</div>
 
                             <div>
-                                <p>Grade Records</p>
-                                <h2 id="totalReports">0</h2>
+                                <p>Attendance Rate</p>
+                                <h2 id="attendanceRate">0%</h2>
                             </div>
 
                         </div>
 
                     </div>
 
+                    <div class="dashboard-chart-grid">
+                        <article class="dashboard-chart-card">
+                            <div class="dashboard-chart-heading">
+                                <div>
+                                    <h2>Students by Department</h2>
+                                    <p>Enrollment across the college</p>
+                                </div>
+                            </div>
+                            <div id="departmentChart" class="dashboard-bars" aria-label="Student enrollment by department"></div>
+                        </article>
+                        <article class="dashboard-chart-card">
+                            <div class="dashboard-chart-heading">
+                                <div>
+                                    <h2>Students by Year</h2>
+                                    <p>Enrollment across academic years</p>
+                                </div>
+                            </div>
+                            <div id="yearChart" class="dashboard-bars" aria-label="Student enrollment by academic year"></div>
+                        </article>
+                    </div>
 
+
+                    <div class="recent-students-block">
                     <div class="section-heading">
 
                         <div>
@@ -300,6 +322,7 @@
 
                         </table>
 
+                    </div>
                     </div>
 
                 </section>
@@ -1153,7 +1176,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=4"></script>
 
 </body>
 
