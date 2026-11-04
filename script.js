@@ -845,21 +845,49 @@ function updateStudentDropdowns() {
 
 function renderDashboard() {
     const role = currentUser.role;
+    const departments = students.reduce((counts, student) => {
+        const department = student.department || "Unassigned";
+        counts[department] = (counts[department] || 0) + 1;
+        return counts;
+    }, {});
+    const years = students.reduce((counts, student) => {
+        const year = student.year || "Unassigned";
+        counts[year] = (counts[year] || 0) + 1;
+        return counts;
+    }, {});
+    const average = reports.length
+        ? reports.reduce((sum, report) => sum + Number(report.marks || 0), 0) / reports.length
+        : 0;
+    const presentCount = attendance.filter(record => String(record.status).toLowerCase() === "present").length;
+    const attendancePercent = attendance.length ? (presentCount / attendance.length) * 100 : 0;
 
-    // Show statistics only where appropriate
-    const statsGrid = document.querySelector(".stats-grid");
+    $("#totalStudents").textContent = students.length;
+    $("#totalDepartments").textContent = Object.keys(departments).length;
+    $("#averageGrade").textContent = `${average.toFixed(1)}%`;
+    $("#attendanceRate").textContent = `${attendancePercent.toFixed(1)}%`;
 
-    if (role === "student") {
-        statsGrid.classList.add("hidden");
-    } else {
-        statsGrid.classList.remove("hidden");
-    }
+    const renderBars = (target, data) => {
+        const entries = Object.entries(data).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+        const max = Math.max(1, ...entries.map(([, count]) => count));
+        $(target).innerHTML = entries.length
+            ? entries.map(([label, count]) => `
+                <div class="dashboard-bar-row" aria-label="${safe(label)}: ${count} students">
+                    <span class="dashboard-bar-label">${safe(label)}</span>
+                    <span class="dashboard-bar-track"><span class="dashboard-bar-fill" style="width:${(count / max) * 100}%"></span></span>
+                    <strong>${count}</strong>
+                </div>
+            `).join("")
+            : '<p class="dashboard-chart-empty">No student records yet.</p>';
+    };
+    renderBars("#departmentChart", departments);
+    renderBars("#yearChart", years);
+    document.querySelector(".dashboard-chart-grid")?.classList.toggle(
+        "hidden",
+        role === "student"
+    );
 
     // Show recent students only to admin and teacher
-    const recentStudentsSection = document
-        .getElementById("recentStudentsTable")
-        .closest(".section-heading")
-        ?.parentElement;
+    const recentStudentsSection = document.querySelector(".recent-students-block");
 
     if (recentStudentsSection) {
         recentStudentsSection.classList.toggle(
@@ -869,11 +897,6 @@ function renderDashboard() {
     }
 
     if (role === "admin" || role === "teacher") {
-        $("#totalStudents").textContent = students.length;
-        $("#totalTeachers").textContent = teachers.length;
-        $("#totalAttendance").textContent = attendance.length;
-        $("#totalReports").textContent = reports.length;
-
         const recent = [...students].slice(-5).reverse();
 
         if (recent.length === 0) {

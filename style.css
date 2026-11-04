@@ -645,6 +645,82 @@ select:focus-visible {
     font-size: 25px;
 }
 
+.dashboard-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 32px;
+}
+
+.dashboard-chart-card {
+    min-width: 0;
+    padding: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.dashboard-chart-heading h2 {
+    font-size: 17px;
+}
+
+.dashboard-chart-heading p {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.dashboard-bars {
+    display: grid;
+    gap: 15px;
+    margin-top: 22px;
+}
+
+.dashboard-bar-row {
+    display: grid;
+    grid-template-columns: minmax(95px, 1.1fr) minmax(50px, 2fr) 28px;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.dashboard-bar-label {
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dashboard-bar-track {
+    height: 10px;
+    overflow: hidden;
+    background: var(--border);
+    border-radius: 99px;
+}
+
+.dashboard-bar-fill {
+    display: block;
+    height: 100%;
+    min-width: 3px;
+    background: var(--primary);
+    border-radius: inherit;
+}
+
+.dashboard-bar-row strong {
+    text-align: right;
+}
+
+.dashboard-chart-empty {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+@media (max-width: 760px) {
+    .dashboard-chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 /* =========================
    SECTION HEADINGS

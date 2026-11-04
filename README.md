@@ -31,8 +31,16 @@ On first launch, `campuscore.db` is created in this project folder. The app seed
 | Administrator | `ADMIN` | `admin123` |
 | Teacher | `TCH1001` | `teacher123` |
 | Student | `STU1001` | `student123` |
+| Student | `STU2006` | `student123` |
+| Student | `STU3001`–`STU3100` | `student123` |
 
-Other demo students use `student123`. Account data is stored in the database for this local demo.
+Other demo students use `student123`. Teacher accounts use `teacher123`. The database includes additional sample teachers with IDs `TCH1002`, `TCH2001`–`TCH2004`, and `TCH3001`–`TCH3010`.
+
+### Sample database contents
+
+The included `campuscore.db` currently contains 120 students, 16 teachers, 600 marks records, 1,200 attendance records, and 137 user accounts. Every student has at least five marks records and ten attendance records. The data covers multiple departments and academic years, with linked user, student, teacher, grade, and attendance rows.
+
+The dashboard shows college-wide student totals, department count, average marks, attendance rate, and bar charts for enrollment by department and year. Students can see these aggregate charts on Dashboard. Their personal marks and attendance are available under **My Academics**. Refresh the browser after database or app updates so it reloads the latest data and versioned scripts.
 
 ## Operate the website
 
@@ -111,7 +119,7 @@ ORDER BY marks DESC;
 
 SELECT date, status, studentId
 FROM attendance
-WHERE date = '2026-10-30'
+WHERE date = (SELECT MAX(date) FROM attendance)
 ORDER BY studentId;
 ```
 
