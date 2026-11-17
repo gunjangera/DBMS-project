@@ -1,4 +1,4 @@
-"""CampusCore SQLite API. Run with: python3 server.py"""
+"""CampusCore SQLite API. Run from the project root with: python3 backend/server.py"""
 
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -6,8 +6,9 @@ import json
 import sqlite3
 from urllib.parse import urlparse
 
-ROOT = Path(__file__).resolve().parent
-DB_PATH = ROOT / "campuscore.db"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
+DB_PATH = PROJECT_ROOT / "database" / "campuscore.db"
 
 
 def connect():
@@ -61,7 +62,7 @@ def get_state(db):
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(ROOT), **kwargs)
+        super().__init__(*args, directory=str(FRONTEND_DIR), **kwargs)
 
     def send_json(self, status, payload):
         body = json.dumps(payload).encode()
