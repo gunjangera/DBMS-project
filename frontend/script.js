@@ -84,6 +84,15 @@ function today() {
 }
 
 
+function setAttendanceDateLimits() {
+    const latestDate = today();
+    ["#attendanceDate", "#attendanceRosterDate"].forEach(selector => {
+        const input = $(selector);
+        if (input) input.max = latestDate;
+    });
+}
+
+
 function grade(marks) {
     if (marks >= 90) return "A+";
     if (marks >= 80) return "A";
@@ -275,6 +284,7 @@ let reports = load("campuscore_reports", [
 
 
 let attendance = load("campuscore_attendance", []);
+const attendanceRosterDraft = new Map();
 
 
 let currentUser = load("campuscore_currentUser", null);
@@ -513,6 +523,11 @@ function setupUser() {
     );
 
     $("#addAttendanceSection").classList.toggle(
+        "hidden",
+        currentUser.role === "student"
+    );
+
+    $("#attendanceRosterSection").classList.toggle(
         "hidden",
         currentUser.role === "student"
     );
@@ -1588,6 +1603,8 @@ function renderAttendance() {
 
     updateStudentDropdowns();
 
+    renderAttendanceRoster();
+
 
     const query = $("#attendanceSearch").value.trim().toLowerCase();
 
@@ -1688,6 +1705,138 @@ function renderAttendance() {
 }
 
 
+function renderAttendanceRoster() {
+    setAttendanceDateLimits();
+    const dateInput = $("#attendanceRosterDate");
+    const date = dateInput.value || today();
+    dateInput.value = date;
+
+    const query = $("#attendanceRosterSearch").value.trim().toLowerCase();
+    const roster = [...students].sort((first, second) =>
+        (first.department || "Unassigned").localeCompare(second.department || "Unassigned")
+        || first.name.localeCompare(second.name)
+    );
+    const filtered = roster.filter(student => searchMatch({
+        id: student.id,
+        name: student.name,
+        department: student.department,
+        year: student.year
+    }, query));
+
+    const markedCount = roster.filter(student => {
+        const key = `${date}|${student.id}`;
+        return attendanceRosterDraft.has(key)
+            || attendance.some(record => record.studentId === student.id && record.date === date);
+    }).length;
+    $("#attendanceRosterSummary").textContent =
+        `${markedCount} of ${roster.length} students marked for ${date}.`;
+
+    if (filtered.length === 0) {
+        showEmptyRow("attendanceRosterTable", 4,
+            query ? "No students match your search." : "No students available.");
+        return;
+    }
+
+    const departments = new Map();
+    filtered.forEach(student => {
+        const department = student.department || "Unassigned";
+        if (!departments.has(department)) departments.set(department, []);
+        departments.get(department).push(student);
+    });
+
+    $("#attendanceRosterTable").innerHTML = [...departments.entries()].map(([department, departmentStudents]) => `
+        <tr class="attendance-department-row">
+            <th colspan="4" scope="rowgroup">${safe(department)} <span>(${departmentStudents.length})</span></th>
+        </tr>
+        ${departmentStudents.map(student => {
+            const key = `${date}|${student.id}`;
+            const existing = attendance.find(record => record.studentId === student.id && record.date === date);
+            const status = attendanceRosterDraft.get(key) ?? existing?.status ?? "";
+            return `
+                <tr>
+                    <td>${safe(student.id)}</td>
+                    <td>${safe(student.name)}</td>
+                    <td>${student.year ? safe(student.year) : "—"}</td>
+                    <td>
+                        <select class="attendance-roster-status" data-student-id="${safe(student.id)}" aria-label="Attendance for ${safe(student.name)}">
+                            <option value="" ${status === "" ? "selected" : ""}>Choose status</option>
+                            <option value="Present" ${status === "Present" ? "selected" : ""}>Present</option>
+                            <option value="Absent" ${status === "Absent" ? "selected" : ""}>Absent</option>
+                        </select>
+                    </td>
+                </tr>
+            `;
+        }).join("")}
+    `).join("");
+}
+
+
+$("#attendanceRosterTable").addEventListener("change", function (event) {
+    const select = event.target.closest(".attendance-roster-status");
+    if (!select) return;
+
+    const key = `${$("#attendanceRosterDate").value}|${select.dataset.studentId}`;
+    if (select.value) attendanceRosterDraft.set(key, select.value);
+    else attendanceRosterDraft.delete(key);
+    renderAttendanceRoster();
+});
+
+$("#attendanceRosterSearch").addEventListener("input", renderAttendanceRoster);
+$("#attendanceRosterDate").addEventListener("change", renderAttendanceRoster);
+
+$("#markAllPresentBtn").addEventListener("click", function () {
+    if (!currentUser || currentUser.role === "student") return;
+    const date = $("#attendanceRosterDate").value || today();
+    students.forEach(student => attendanceRosterDraft.set(`${date}|${student.id}`, "Present"));
+    renderAttendanceRoster();
+});
+
+$("#saveAttendanceRosterBtn").addEventListener("click", function () {
+    if (!currentUser || currentUser.role === "student") {
+        showToast("You cannot mark attendance.", "error");
+        return;
+    }
+
+    const date = $("#attendanceRosterDate").value;
+    if (!date) {
+        showToast("Choose an attendance date.", "error");
+        return;
+    }
+    if (date > today()) {
+        showToast("Attendance cannot be marked for a future date.", "error");
+        $("#attendanceRosterDate").focus();
+        return;
+    }
+
+    let saved = 0;
+    let updated = 0;
+    students.forEach(student => {
+        const key = `${date}|${student.id}`;
+        const status = attendanceRosterDraft.get(key);
+        if (!status) return;
+
+        const existing = attendance.find(record => record.studentId === student.id && record.date === date);
+        if (existing) {
+            existing.status = status;
+            updated += 1;
+        } else {
+            attendance.push({ id: Date.now() + saved, studentId: student.id, date, status });
+            saved += 1;
+        }
+        attendanceRosterDraft.delete(key);
+    });
+
+    if (saved + updated === 0) {
+        showToast("Choose attendance for at least one student first.", "error");
+        return;
+    }
+
+    save("campuscore_attendance", attendance);
+    renderAll();
+    showToast(`Attendance saved for ${saved + updated} student(s).`);
+});
+
+
 /* ADD ATTENDANCE */
 
 $("#attendanceForm").addEventListener("submit", function (event) {
@@ -1707,6 +1856,12 @@ $("#attendanceForm").addEventListener("submit", function (event) {
     const date = $("#attendanceDate").value;
 
     const status = $("#attendanceStatus").value;
+
+    if (date > today()) {
+        showToast("Attendance cannot be marked for a future date.", "error");
+        $("#attendanceDate").focus();
+        return;
+    }
 
 
     if (!studentId) {
@@ -2247,6 +2402,8 @@ async function initializeDatabase() {
 ===================================== */
 
 $("#attendanceDate").value = today();
+$("#attendanceRosterDate").value = today();
+setAttendanceDateLimits();
 updateClock();
 setInterval(updateClock, 1000);
 

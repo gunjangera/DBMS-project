@@ -7,7 +7,7 @@
 
     <title>CampusCore | Student Management System</title>
 
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 
 <body>
@@ -793,6 +793,54 @@
                     </div>
 
 
+                    <div id="attendanceRosterSection" class="panel">
+
+                        <div class="table-toolbar">
+                            <div>
+                                <h3>Take Class Attendance</h3>
+                                <p>Search your student list and mark attendance for a date.</p>
+                            </div>
+
+                            <div class="attendance-roster-controls">
+                                <label class="attendance-date-control" for="attendanceRosterDate">
+                                    Date
+                                    <input id="attendanceRosterDate" type="date" required>
+                                </label>
+                                <input
+                                    type="search"
+                                    id="attendanceRosterSearch"
+                                    class="search-box"
+                                    placeholder="Find student by name, ID, or department..."
+                                    aria-label="Find a student in the attendance roster"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="attendance-roster-actions">
+                            <p id="attendanceRosterSummary" class="muted-text" aria-live="polite"></p>
+                            <div>
+                                <button id="markAllPresentBtn" class="secondary-btn" type="button">Mark all present</button>
+                                <button id="saveAttendanceRosterBtn" class="primary-btn" type="button">Save attendance</button>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Student</th>
+                                        <th>Year</th>
+                                        <th>Attendance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceRosterTable"></tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+
                     <div id="addAttendanceSection" class="panel">
 
                         <h3>Mark Attendance</h3>
@@ -1176,7 +1224,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="script.js?v=4"></script>
+    <script src="script.js?v=7"></script>
 
 </body>
 

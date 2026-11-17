@@ -15,14 +15,14 @@ Open a terminal in the project directory and run:
 
 ```sh
 cd "/Users/deepan9477/DBMS PROJECT/DBMS-project"
-python3 server.py
+python3 backend/server.py
 ```
 
 Open [http://localhost:8000](http://localhost:8000) in the browser. Keep the terminal and server running while using the app. Stop the server with `Ctrl+C`.
 
-Do not open `index.html` directly as a `file://` URL; the website calls the local API at `/api/state` to read and save its database.
+The frontend files are in `frontend/`, the Python API is in `backend/`, and the SQLite database is in `database/`. Do not open `frontend/index.html` directly as a `file://` URL; the website calls the local API at `/api/state` to read and save its database.
 
-On first launch, `campuscore.db` is created in this project folder. The app seeds it from its existing browser data or the demo defaults. Later launches use the database as the source of app data. The browser also keeps a local cache, but the SQLite file is the persistent database when the server is running.
+On first launch, `database/campuscore.db` is created. The app seeds it from its existing browser data or the demo defaults. Later launches use the database as the source of app data. The browser also keeps a local cache, but the SQLite file is the persistent database when the server is running.
 
 ## Demo accounts
 
@@ -38,7 +38,7 @@ Other demo students use `student123`. Teacher accounts use `teacher123`. The dat
 
 ### Sample database contents
 
-The included `campuscore.db` currently contains 120 students, 16 teachers, 600 marks records, 1,200 attendance records, and 137 user accounts. Every student has at least five marks records and ten attendance records. The data covers multiple departments and academic years, with linked user, student, teacher, grade, and attendance rows.
+The included `database/campuscore.db` currently contains 120 students, 16 teachers, 600 marks records, 1,200 attendance records, and 137 user accounts. Every student has at least five marks records and ten attendance records. The data covers multiple departments and academic years, with linked user, student, teacher, grade, and attendance rows.
 
 The dashboard shows college-wide student totals, department count, average marks, attendance rate, and bar charts for enrollment by department and year. Students can see these aggregate charts on Dashboard. Their personal marks and attendance are available under **My Academics**. Refresh the browser after database or app updates so it reloads the latest data and versioned scripts.
 
@@ -49,7 +49,7 @@ The dashboard shows college-wide student totals, department count, average marks
 3. As an administrator or teacher, use **Students** to add and search student records. Teachers and administrators can add students; administrators can delete them.
 4. As an administrator, use **Teachers** to add and search teacher records. Administrators can delete teachers.
 5. As an administrator or teacher, use **Reports & Grades** to record marks and search grades.
-6. As an administrator or teacher, use **Attendance** to record attendance by student and date. A student can view their own academic and attendance information.
+6. As an administrator or teacher, use **Attendance → Take Class Attendance** to mark students from a roster grouped by department, with students sorted by name within each department. Search by student name, ID, department, or year. Choose a date no later than today, mark statuses individually or use **Mark all present** and adjust absences, then select **Save attendance**. Saving updates an existing record for that student and date. The single-student attendance form is also available below the roster. Students can view their own academic and attendance information under **My Academics**.
 7. As an administrator, use **Administration → Import Data from Excel** to upload student, teacher, marks, and attendance rows, or **Export Data** to download a JSON backup.
 8. Use **Logout** to end the current browser session.
 
@@ -72,7 +72,7 @@ Each imported account's initial password is the first word of its name (for exam
 
 ## SQLite database
 
-The file is `campuscore.db` in the project directory. Its tables are:
+The file is `database/campuscore.db`. Its tables are:
 
 - `users`: login accounts and shared profile details
 - `students`: student profiles, linked to `users`
@@ -88,7 +88,7 @@ Keep the app server running in one terminal. In a second terminal:
 
 ```sh
 cd "/Users/deepan9477/DBMS PROJECT/DBMS-project"
-sqlite3 campuscore.db
+sqlite3 database/campuscore.db
 ```
 
 At the `sqlite>` prompt, make results readable and inspect the schema:
